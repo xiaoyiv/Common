@@ -1,0 +1,34 @@
+ // 支付测试
+            String payType = "1";
+            long amount = 600000;
+            string sss = Guid.NewGuid().ToString();
+            // POST请求参数：按签名顺序，有序存放
+            Dictionary<String, String> par = new Dictionary<String, String>();
+           //par.Add("HXMerchNo", "201704111039212920000000000000000489");
+            par.Add("payType", payType);
+            par.Add("merchOrderNo", LHT.Infrastructure.EncryptHelper.GetMD532(sss).Substring(0,12));	// 商家自定义的订单号		// 固定
+            par.Add("amount", amount.ToString());											// 金额单位为“分”
+            String returnUrl = "http://zktest.wechatis.net/return.aspx?orderNo=" + sss;											// 前台返回页面：以商家自己的网站为准
+            //String notifyUrl = "http://zktest.wechatis.net/notify.ashx";											// 后端通知页面：以商 
+            //String returnUrl = "";											// 前台返回页面：以商家自己的网站为准
+            String notifyUrl = "";
+            //par.Add("frontEndUrl", returnUrl);
+            par.Add("backEndUrl", notifyUrl);
+            par.Add("goodsName", "测试");						// 商家自定义的货物名称，该字段不需参加签名
+            par.Add("frontEndUrl", returnUrl);
+            par.Add("sign", Extension.Common.GetSignStrNew(par, "84B4851F-73A1-4D06-A492-A7FD4FABB495"));
+            //FC8ACB25556C76851A4CE32C3BEF436C  yizhong
+            //E79602CBE34E337DBF496F3114F924ED   tepay
+            //51D3E099AC87C894F06F011D6D62DDA0  7080
+            //84B4851F-73A1-4D06-A492-A7FD4FABB495 天哥
+           
+            Dictionary<String, String> par1 = par;
+            //par1["frontEndUrl"] = Server.UrlEncode(returnUrl);
+            String json = JsonConvert.SerializeObject(par1);
+            string url = "http://103.239.74.18:8088/server/order/create";// "http://child.kkresg.xin:8088/server/order/create"; //"http://pxorypayapi.2epay.net/server/order/create";//"http://103.239.74.18:8088/server/order/create"; //http://pxorypayapi.2epay.net/server/order/  //http://localhost:38005/server/order/create
+            //string url = "http://bcpayapi1.wechatis.net/server/order/create";
+            String resp = Common.GetHtml(json, url);
+            CreateOrderResultModel result = JsonConvert.DeserializeObject<CreateOrderResultModel>(resp);
+            Dictionary<string, string> parback = Common.ToMap<string>(result);
+            string sign = Common.GetSignStrNew(parback, "84B4851F-73A1-4D06-A492-A7FD4FABB495");
+            bool isV = result.sign == sign ? true : false;
